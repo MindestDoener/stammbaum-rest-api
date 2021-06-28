@@ -1,0 +1,30 @@
+{
+  "name": "stammbaum-rest-api",
+  "version": "1.0.0",
+  "description": "rest api for stammbaum-app",
+  "main": "app.js",
+  "scripts": {
+    "serve": "nodemon app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MindestDoener/stammbaum-rest-api.git"
+  },
+  "keywords": [
+    "rest",
+    "api"
+  ],
+  "author": "Mindestdöner",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MindestDoener/stammbaum-rest-api/issues"
+  },
+  "homepage": "https://github.com/MindestDoener/stammbaum-rest-api#readme",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
+    "node-postgres": "^0.6.2",
+    "swagger-ui-express": "^4.1.6"
+  }
+}
