@@ -2,3 +2,6 @@
 # stammbaum-rest-api
 
 backend for stammbaum-app
+
+to serve app localy: 
+``npm run serve``
