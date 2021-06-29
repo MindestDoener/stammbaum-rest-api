@@ -10,7 +10,7 @@ const ENDPOINT = './endpoints/'
 
 app.use(require(ENDPOINT + 'swagger'));
 app.use(require(ENDPOINT + 'user'))
-
+app.use(express.json());
 
 app.get('/', (req, res) => {
     res.send('Rest Api is Running');
@@ -28,31 +28,28 @@ JSON OBJECT TO SEND IN BODY:
     "password": "test"
    }
  */
-app.post('/users', (req, res)=> {
-    const user = req.body;
-    let insertQuery = `INSERT INTO USERTABLE(username, password) 
-                       values('${user.username}', '${user.password}')`
 
-    client.query(insertQuery, (err, result)=>{
-        if(!err){
-            res.send('Insertion was successful')
-        }
-        else{ console.log(err.message) }
-    });
-    client.end;
+app.post('/users', async (req, res)=> {
+    try {
+        const user = req.body;
+        console.log(user);
+        const newUser = await client.query("INSERT INTO USERTABLE (username, password) VALUES($1, $2) RETURNING *",
+            [user.username, user.password]);
+        res.json(newUser.rows[0]);
+    } catch (err) {
+        console.error(err.message);
+    }
 });
 
 //--DELETE REQUEST (Endpoint /users/{username})
-app.delete('/users/:username', (req, res)=> {
-    let insertQuery = `DELETE FROM USERTABLE WHERE username=${req.params.username}`
-
-    client.query(insertQuery, (err, result)=>{
-        if(!err){
-            res.send('Deletion was successful')
-        }
-        else{ console.log(err.message) }
-    })
-    client.end;
+app.delete('/users/:username', async (req, res)=> {
+    try {
+        const { username } = req.params;
+        const deleteUser = await client.query("DELETE FROM USERTABLE WHERE username=$1", [username]);
+        res.json("Deleted User " + username);
+    } catch (err) {
+        console.error(err.message);
+    }
 });
 
 //--UPDATE REQUEST (Endpoint /users/{username}) (Update Credentials for existing user)
@@ -63,31 +60,29 @@ JSON OBJECT TO SEND IN BODY:
     "password": "test2"     <- new password from existing user
    }
 */
-app.put('/users/:username', (req, res)=> {
-    let user = req.body;
-    let updateQuery = `UPDATE USERTABLE
-                       SET password = '${user.password}'
-                       where id = ${user.username}`
-
-    client.query(updateQuery, (err, result)=>{
-        if(!err){
-            res.send('Update was successful')
-        }
-        else{ console.log(err.message) }
-    })
-    client.end;
+app.put('/users/:username', async (req, res)=> {
+    try {
+        const { username } = req.params;
+        const { password } = req.body;
+        const updateUser = await client.query("UPDATE USERTABLE SET password = $1 where username = $2",
+            [password, username]);
+        res.json("Updated User");
+    } catch (err) {
+        console.error(err.message);
+    }
 });
 
 //GET REQUEST (returns password of specific user) (Endpoint /users/{username})
-app.get('/users/:username', (req, res)=>{
-    client.query(`SELECT * FROM USERTABLE WHERE username=${req.params.username}`, (err, result)=>{
-        if(!err){
-            res.send(result.rows);
-        }
-    });
-    client.end;
+app.get('/users/:username', async (req, res)=>{
+    try {
+        const { username } = req.params;
+        const getUserdata = await client.query("SELECT * FROM USERTABLE WHERE username = $1", [username]);
+        res.json(getUserdata.rows[0]);
+    } catch (err) {
+        console.error(err.message);
+    }
 });
-client.connect();
+
 
 //GET REQUEST (returns every user) (Endpoint /users)
 app.get('/users', (req, res)=>{
@@ -96,7 +91,6 @@ app.get('/users', (req, res)=>{
             res.send(result.rows);
         }
     });
-    client.end;
 });
 
 const port = process.env.PORT || 3000;
