@@ -10,13 +10,14 @@ app.get('/', (req, res) => {
     res.send('Rest Api is Running');
 });
 
+//----------------------------------------------------------------------------------------------------------------------
+
 const ENDPOINT = './src/endpoints/'
 
 app.use(require(ENDPOINT + 'swagger'));
-
-
 app.use(require(ENDPOINT + 'user'))
 
+//----------------------------------------------------------------------------------------------------------------------
 
 const port = process.env.PORT || 3000;
 

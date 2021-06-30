@@ -182,9 +182,9 @@ router.get('/users/:username', rateLimit, async (req, res) => {
 router.put('/users/:username', rateLimit, async (req, res) => {
     try {
         const {username} = req.params;
-        const password = req.body;
+        const {newPassword, oldPassword} = req.body;
         const updatedUser = await client.query("UPDATE USERTABLE SET password = $1 where username = $2 AND password = $3 RETURNING *",
-            [password.newPassword, username, password.oldPassword]);
+            [newPassword, username, oldPassword]);
         if (updatedUser.rows.length === 0) {
             res.sendStatus(404);
         } else {
@@ -209,19 +209,15 @@ router.put('/users/:username', rateLimit, async (req, res) => {
  *                      $ref: '#/components/schemas/User'
  *      responses:
  *          200:
- *              description: 'User successfully deleted. Returns: deleted User'
- *              content:
- *                  application/json:
- *                      schema:
- *                          $ref: '#/components/schemas/User'
+ *              description: User successfully deleted
  *          404:
  *              description: User not found
  */
 router.delete('/users', rateLimit, async (req, res) => {
     try {
-        const user= req.body;
+        const user = req.body;
         const deletedUser = await client.query("DELETE FROM USERTABLE WHERE username=$1 AND password=$2 RETURNING *",
-                                                [user.username, user.password]);
+            [user.username, user.password]);
         if (deletedUser.rows.length === 0) {
             res.sendStatus(404);
         } else {
