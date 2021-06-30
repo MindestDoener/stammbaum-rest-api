@@ -20,6 +20,9 @@ const options = {
             {
                 url: "http://localhost:3000/api/",
             },
+            {
+                url: "https://stammbaum-rest-api.herokuapp.com/api/"
+            },
         ],
         security: [
             {
