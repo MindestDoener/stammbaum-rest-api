@@ -31,13 +31,18 @@ const rateLimit = require('../rateLimit');
  *          Password:
  *              type: object
  *              required:
- *                  - password
+ *                  - oldPassword
+ *                  - newPassword
  *              properties:
- *                  password:
+ *                  oldPassword:
  *                      type: string
- *                      description: Encrypted password
+ *                      description: Current password
+ *                  newPassword:
+ *                      type: string
+ *                      description: New Password
  *              example:
- *                  password: coolesPasswort
+ *                  oldPassword: coolesPasswort
+ *                  newPassword: cooleresPasswort
  */
 
 /**
@@ -177,9 +182,9 @@ router.get('/users/:username', rateLimit, async (req, res) => {
 router.put('/users/:username', rateLimit, async (req, res) => {
     try {
         const {username} = req.params;
-        const {password} = req.body;
-        const updatedUser = await client.query("UPDATE USERTABLE SET password = $1 where username = $2 RETURNING *",
-            [password, username]);
+        const password = req.body;
+        const updatedUser = await client.query("UPDATE USERTABLE SET password = $1 where username = $2 AND password = $3 RETURNING *",
+            [password.newPassword, username, password.oldPassword]);
         if (updatedUser.rows.length === 0) {
             res.sendStatus(404);
         } else {
@@ -192,16 +197,16 @@ router.put('/users/:username', rateLimit, async (req, res) => {
 
 /**
  * @swagger
- * /users/{username}:
+ * /users:
  *  delete:
  *      summary: Deletes existing User
  *      tags: [Users]
- *      parameters:
- *          - in: path
- *            name: username
- *            type: string
- *            required: true
- *            description: username of the user to delete.
+ *      requestBody:
+ *          required: true
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      $ref: '#/components/schemas/User'
  *      responses:
  *          200:
  *              description: 'User successfully deleted. Returns: deleted User'
@@ -212,14 +217,15 @@ router.put('/users/:username', rateLimit, async (req, res) => {
  *          404:
  *              description: User not found
  */
-router.delete('/users/:username', rateLimit, async (req, res) => {
+router.delete('/users', rateLimit, async (req, res) => {
     try {
-        const {username} = req.params;
-        const deletedUser = await client.query("DELETE FROM USERTABLE WHERE username=$1 RETURNING *", [username]);
+        const user= req.body;
+        const deletedUser = await client.query("DELETE FROM USERTABLE WHERE username=$1 AND password=$2 RETURNING *",
+                                                [user.username, user.password]);
         if (deletedUser.rows.length === 0) {
             res.sendStatus(404);
         } else {
-            res.status(200).json(deletedUser.rows[0]);
+            res.status(200).send("Successfully deleted the User");
         }
     } catch (err) {
         res.sendStatus(500);
