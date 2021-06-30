@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const client = require('../connection');
+const rateLimit = require('../rateLimit');
 
 /** USER MODEL
  * @swagger
@@ -62,7 +63,7 @@ const client = require('../connection');
  *                          items:
  *                              $ref: '#/components/schemas/User'
  */
-router.get('/users', (req, res) => {
+router.get('/users', rateLimit, (req, res) => {
     client.query(`SELECT * FROM USERTABLE`, (err, result) => {
         if (!err) {
             res.status(200).json(result.rows);
@@ -94,7 +95,7 @@ router.get('/users', (req, res) => {
  *          403:
  *              description: Username already exists
  */
-router.post('/users', async (req, res) => {
+router.post('/users', rateLimit, async (req, res) => {
     try {
         const user = req.body;
         const newUser = await client.query("INSERT INTO USERTABLE (username, password) VALUES($1, $2) RETURNING *",
@@ -131,7 +132,7 @@ router.post('/users', async (req, res) => {
  *          404:
  *              description: User not found
  */
-router.get('/users/:username', async (req, res) => {
+router.get('/users/:username', rateLimit, async (req, res) => {
     try {
         const {username} = req.params;
         const getUserdata = await client.query("SELECT * FROM USERTABLE WHERE username = $1", [username]);
@@ -173,7 +174,7 @@ router.get('/users/:username', async (req, res) => {
  *          404:
  *              description: User not found
  */
-router.put('/users/:username', async (req, res) => {
+router.put('/users/:username', rateLimit, async (req, res) => {
     try {
         const {username} = req.params;
         const {password} = req.body;
@@ -211,7 +212,7 @@ router.put('/users/:username', async (req, res) => {
  *          404:
  *              description: User not found
  */
-router.delete('/users/:username', async (req, res) => {
+router.delete('/users/:username', rateLimit, async (req, res) => {
     try {
         const {username} = req.params;
         const deletedUser = await client.query("DELETE FROM USERTABLE WHERE username=$1 RETURNING *", [username]);

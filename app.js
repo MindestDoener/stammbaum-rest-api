@@ -10,8 +10,7 @@ app.get('/', (req, res) => {
     res.send('Rest Api is Running');
 });
 
-
-const ENDPOINT = './endpoints/'
+const ENDPOINT = './src/endpoints/'
 
 app.use(require(ENDPOINT + 'swagger'));
 
