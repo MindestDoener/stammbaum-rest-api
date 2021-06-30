@@ -18,9 +18,23 @@ const options = {
         },
         servers: [
             {
-                url: "http://localhost:3000/",
+                url: "http://localhost:3000/api/",
             },
         ],
+        security: [
+            {
+                ApiKeyAuth: []
+            }
+        ],
+        components: {
+            securitySchemes: {
+                ApiKeyAuth: {
+                    type: "apiKey",
+                    in: "header",
+                    name: "X-API-Key"
+                }
+            }
+        }
     },
     apis: ["./src/endpoints/*.js"],
 };
