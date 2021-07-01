@@ -228,4 +228,37 @@ router.delete('/users', rateLimit, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /login:
+ *  post:
+ *      summary: get status for User credentials combination
+ *      tags: [Users]
+ *      requestBody:
+ *          required: true
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      $ref: '#/components/schemas/User'
+ *      responses:
+ *          200:
+ *              description: OK
+ *          404:
+ *              description: "Invalid User and/or Password combination"
+ */
+router.post('/login', rateLimit, async (req, res) => {
+    try {
+        const user = req.body;
+        const checkForUser = await client.query("SELECT * FROM USERTABLE WHERE username = $1 AND password = $2",
+                                                [user.username, user.password]);
+        if (checkForUser.rows.length === 0) {
+            res.status(404).send("Invalid User and/or Password combination");
+        } else {
+            res.sendStatus(200);
+        }
+    } catch (err) {
+        res.sendStatus(500);
+    }
+});
+
 module.exports = router;
