@@ -80,6 +80,42 @@ router.get('/users', rateLimit, (req, res) => {
 
 /**
  * @swagger
+ * /users/{username}:
+ *  get:
+ *      summary: gets specific User by username
+ *      tags: [Users]
+ *      parameters:
+ *          - in: path
+ *            name: username
+ *            type: string
+ *            required: true
+ *            description: username of the user to get.
+ *      responses:
+ *          200:
+ *              description: OK
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          $ref: '#/components/schemas/User'
+ *          404:
+ *              description: User not found
+ */
+router.get('/users/:username', rateLimit, async (req, res) => {
+    try {
+        const {username} = req.params;
+        const getUserdata = await client.query("SELECT * FROM USERTABLE WHERE username = $1", [username]);
+        if (getUserdata.rows.length === 0) {
+            res.sendStatus(404);
+        } else {
+            res.status(200).json(getUserdata.rows[0]);
+        }
+    } catch (err) {
+        res.sendStatus(500);
+    }
+});
+
+/**
+ * @swagger
  * /users:
  *  post:
  *      summary: Creates a new User
@@ -117,39 +153,37 @@ router.post('/users', rateLimit, async (req, res) => {
 
 /**
  * @swagger
- * /users/{username}:
- *  get:
- *      summary: gets specific User by username
+ * /login:
+ *  post:
+ *      summary: get status for User credentials combination
  *      tags: [Users]
- *      parameters:
- *          - in: path
- *            name: username
- *            type: string
- *            required: true
- *            description: username of the user to get.
+ *      requestBody:
+ *          required: true
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      $ref: '#/components/schemas/User'
  *      responses:
  *          200:
  *              description: OK
- *              content:
- *                  application/json:
- *                      schema:
- *                          $ref: '#/components/schemas/User'
  *          404:
- *              description: User not found
+ *              description: "Invalid User and/or Password combination"
  */
-router.get('/users/:username', rateLimit, async (req, res) => {
+router.post('/login', rateLimit, async (req, res) => {
     try {
-        const {username} = req.params;
-        const getUserdata = await client.query("SELECT * FROM USERTABLE WHERE username = $1", [username]);
-        if (getUserdata.rows.length === 0) {
-            res.sendStatus(404);
+        const user = req.body;
+        const checkForUser = await client.query("SELECT * FROM USERTABLE WHERE username = $1 AND password = $2",
+            [user.username, user.password]);
+        if (checkForUser.rows.length === 0) {
+            res.status(404).send("Invalid User and/or Password combination");
         } else {
-            res.status(200).json(getUserdata.rows[0]);
+            res.sendStatus(200);
         }
     } catch (err) {
         res.sendStatus(500);
     }
 });
+
 
 /**
  * @swagger
@@ -228,37 +262,6 @@ router.delete('/users', rateLimit, async (req, res) => {
     }
 });
 
-/**
- * @swagger
- * /login:
- *  post:
- *      summary: get status for User credentials combination
- *      tags: [Users]
- *      requestBody:
- *          required: true
- *          content:
- *              application/json:
- *                  schema:
- *                      $ref: '#/components/schemas/User'
- *      responses:
- *          200:
- *              description: OK
- *          404:
- *              description: "Invalid User and/or Password combination"
- */
-router.post('/login', rateLimit, async (req, res) => {
-    try {
-        const user = req.body;
-        const checkForUser = await client.query("SELECT * FROM USERTABLE WHERE username = $1 AND password = $2",
-                                                [user.username, user.password]);
-        if (checkForUser.rows.length === 0) {
-            res.status(404).send("Invalid User and/or Password combination");
-        } else {
-            res.sendStatus(200);
-        }
-    } catch (err) {
-        res.sendStatus(500);
-    }
-});
+
 
 module.exports = router;
