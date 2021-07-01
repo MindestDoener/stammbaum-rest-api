@@ -5,17 +5,18 @@ const app = express();
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.json());
-
-app.get('/', (req, res) => {
-    res.send('Rest Api is Running');
-});
+app.all('/api/*', require('./src/auth'))
 
 //----------------------------------------------------------------------------------------------------------------------
 
 const ENDPOINT = './src/endpoints/'
 
+app.get('/', (req, res) => {
+    res.send('Rest Api is Running');
+});
 app.use(require(ENDPOINT + 'swagger'));
-app.use(require(ENDPOINT + 'user'))
+
+app.use('/api', require(ENDPOINT + 'user'))
 
 //----------------------------------------------------------------------------------------------------------------------
 
