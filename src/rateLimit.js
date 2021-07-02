@@ -7,7 +7,7 @@ const limitReached = (req, res) => {
 }// Options for our rate limiter
 const options = {
     windowMs: 60000, // 1 minute
-    max: 20, // times one ip can call endpoint in windowMS time
+    max: 10, // times one ip can call endpoint in windowMS time
     onLimitReached: limitReached, // called once when max is reached
     handler: limitReached, // called for each subsequent request once max is reached
 }
