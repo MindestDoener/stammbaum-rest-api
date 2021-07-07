@@ -285,39 +285,39 @@ router.get('/trees/:id', rateLimit, async (req, res) => {
 
 /**
  * @swagger
- * /trees/user:
- *  post:
- *      summary: gets specific Tree by username (! POST + BODY BECAUSE GET + PARAMS DOES NOT WORK !)
+ * /trees/user/{username}:
+ *  get:
+ *      summary: gets all Trees by username
  *      tags: [Trees]
- *      requestBody:
- *          required: true
- *          content:
- *              application/json:
- *                      schema:
- *                          $ref: '#/components/schemas/Username'
+ *      parameters:
+ *          - in: path
+ *            name: username
+ *            type: string
+ *            required: true
+ *            description: username of owner of the trees to get.
  *      responses:
  *          200:
  *              description: OK
  *              content:
  *                  application/json:
  *                      schema:
- *                          $ref: '#/components/schemas/Tree'
+ *                          type: array
+ *                          items:
+ *                              $ref: '#/components/schemas/Tree'
  *          404:
  *              description: User not found
  */
 
-/* The Request is a little Scuffed. Username in address with GET does not work for some reason. So it's a POST with Body*/
-router.post('/trees/user', rateLimit, async (req, res) => {
+router.get('/trees/user/:username', rateLimit, async (req, res) => {
     try {
-        const username = req.body; /* Using Params does result in Error 500 for whatever reason */
-        const getTreeByUser = await client.query("SELECT * FROM trees WHERE username = $1", [username.username]);
+        const {username} = req.params; /* Using Params does result in Error 500 for whatever reason */
+        const getTreeByUser = await client.query("SELECT * FROM trees WHERE username = $1", [username]);
         if (getTreeByUser.rows.length === 0) {
             res.sendStatus(404);
         } else {
             res.status(200).json(getTreeByUser.rows);
         }
     } catch (err) {
-        console.log(err.message);
         res.sendStatus(500);
     }
 });
