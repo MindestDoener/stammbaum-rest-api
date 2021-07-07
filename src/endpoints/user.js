@@ -23,7 +23,21 @@ const rateLimit = require('../rateLimit');
  *                  username: Peter01
  *                  password: coolesPasswort
  */
-
+/** USERNAME MODEL
+ * @swagger
+ *  components:
+ *      schemas:
+ *          Username:
+ *              type: object
+ *              required:
+ *                  - username
+ *              properties:
+ *                  username:
+ *                      type: string
+ *                      description: unique name to identify user
+ *              example:
+ *                  username: Peter01
+ */
 /** Password MODEL
  * @swagger
  *  components:

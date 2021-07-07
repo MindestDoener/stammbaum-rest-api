@@ -17,6 +17,7 @@ app.get('/', (req, res) => {
 app.use(require(ENDPOINT + 'swagger'));
 
 app.use('/api', require(ENDPOINT + 'user'))
+app.use('/api', require(ENDPOINT + 'trees'))
 
 //----------------------------------------------------------------------------------------------------------------------
 
