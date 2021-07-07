@@ -305,7 +305,7 @@ router.get('/trees/:id', rateLimit, async (req, res) => {
  *                          items:
  *                              $ref: '#/components/schemas/Tree'
  *          404:
- *              description: User not found
+ *              description: Tree not found
  */
 
 router.get('/trees/user/:username', rateLimit, async (req, res) => {
