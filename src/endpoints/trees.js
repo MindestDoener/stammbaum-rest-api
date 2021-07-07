@@ -160,7 +160,7 @@ router.post('/trees', rateLimit, async (req, res) => {
         const tree = req.body;
         const newTree = await client.query("INSERT INTO trees (config, username) VALUES($1, $2) RETURNING *",
             [tree.config, tree.username]);
-        res.json(newTree.rows[0],).status(200);
+        res.status(200).json(newTree.rows[0]);
     } catch (err) {
         if (err.constraint === 'fk_user') {
             res.status(403).send("User not in Database");
@@ -267,7 +267,7 @@ router.delete('/trees/:id', rateLimit, async (req, res) => {
  *                      schema:
  *                          $ref: '#/components/schemas/Tree'
  *          404:
- *              description: User not found
+ *              description: Tree not found
  */
 router.get('/trees/:id', rateLimit, async (req, res) => {
     try {
