@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const auth = require('../auth');
 const client = require('../connection');
 const rateLimit = require('../rateLimit');
 
@@ -70,7 +71,7 @@ const rateLimit = require('../rateLimit');
  * @swagger
  * /users:
  *  get:
- *      summary: gets all Users
+ *      summary: gets all Users (needs admin key)
  *      tags: [Users]
  *      responses:
  *          200:
@@ -82,7 +83,7 @@ const rateLimit = require('../rateLimit');
  *                          items:
  *                              $ref: '#/components/schemas/User'
  */
-router.get('/users', rateLimit, (req, res) => {
+router.get('/users', rateLimit, auth('admin'), (req, res) => {
     client.query(`SELECT * FROM USERTABLE`, (err, result) => {
         if (!err) {
             res.status(200).json(result.rows);
@@ -96,7 +97,7 @@ router.get('/users', rateLimit, (req, res) => {
  * @swagger
  * /users/{username}:
  *  get:
- *      summary: gets specific User by username
+ *      summary: gets specific User by username (needs admin key)
  *      tags: [Users]
  *      parameters:
  *          - in: path
@@ -114,7 +115,7 @@ router.get('/users', rateLimit, (req, res) => {
  *          404:
  *              description: User not found
  */
-router.get('/users/:username', rateLimit, async (req, res) => {
+router.get('/users/:username', rateLimit, auth('admin'), async (req, res) => {
     try {
         const {username} = req.params;
         const getUserdata = await client.query("SELECT * FROM USERTABLE WHERE username = $1", [username]);

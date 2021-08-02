@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const client = require('../connection');
 const rateLimit = require('../rateLimit');
+const auth = require('../auth');
 
 /** Tree MODEL
  * @swagger
@@ -111,7 +112,7 @@ const rateLimit = require('../rateLimit');
  * @swagger
  * /trees:
  *  get:
- *      summary: gets all trees
+ *      summary: gets all trees (needs admin key)
  *      tags: [Trees]
  *      responses:
  *          200:
@@ -123,7 +124,7 @@ const rateLimit = require('../rateLimit');
  *                          items:
  *                              $ref: '#/components/schemas/Tree'
  */
-router.get('/trees', rateLimit, (req, res) => {
+router.get('/trees', rateLimit, auth('admin'), (req, res) => {
     client.query(`SELECT * FROM trees`, (err, result) => {
         if (!err) {
             res.status(200).json(result.rows);
@@ -251,7 +252,7 @@ router.delete('/trees/:id', rateLimit, async (req, res) => {
  * @swagger
  * /trees/{id}:
  *  get:
- *      summary: gets specific Tree by id
+ *      summary: gets specific Tree by id (needs admin key)
  *      tags: [Trees]
  *      parameters:
  *          - in: path
@@ -269,7 +270,7 @@ router.delete('/trees/:id', rateLimit, async (req, res) => {
  *          404:
  *              description: Tree not found
  */
-router.get('/trees/:id', rateLimit, async (req, res) => {
+router.get('/trees/:id', rateLimit, auth('admin'), async (req, res) => {
     try {
         const {id} = req.params;
         const getTreedata = await client.query("SELECT * FROM trees WHERE id = $1", [id]);

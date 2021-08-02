@@ -1,11 +1,15 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const cors = require('cors');
+const auth = require('./src/auth');
 
 const app = express();
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.json());
-app.all('/api/*', require('./src/auth'))
+app.use(cors())
+app.options('/api*', cors())
+app.use('/api/*', auth());
 
 //----------------------------------------------------------------------------------------------------------------------
 
