@@ -3,6 +3,7 @@ const router = express.Router();
 const auth = require('../auth');
 const client = require('../connection');
 const rateLimit = require('../rateLimit');
+const {cryptPassword, comparePassword} = require("../encrypt");
 
 /** USER MODEL
  * @swagger
@@ -84,7 +85,8 @@ const rateLimit = require('../rateLimit');
  *                              $ref: '#/components/schemas/User'
  */
 router.get('/users', rateLimit, auth('admin'), (req, res) => {
-    client.query(`SELECT * FROM USERTABLE`, (err, result) => {
+    client.query(`SELECT *
+                  FROM USERTABLE`, (err, result) => {
         if (!err) {
             res.status(200).json(result.rows);
         } else {
@@ -153,16 +155,22 @@ router.get('/users/:username', rateLimit, auth('admin'), async (req, res) => {
  */
 router.post('/users', rateLimit, async (req, res) => {
     try {
-        const user = req.body;
-        const newUser = await client.query("INSERT INTO USERTABLE (username, password) VALUES($1, $2) RETURNING *",
-            [user.username, user.password]);
-        res.json(newUser.rows[0],).status(201);
+        const {username, password} = req.body;
+        cryptPassword(password, async (err, hash) => {
+            if (err) throw err;
+            try {
+                const newUser = await client.query("INSERT INTO USERTABLE (username, password) VALUES($1, $2) RETURNING *", [username, hash]);
+                res.json(newUser.rows[0]).status(201);
+            } catch (err) {
+                if (err.constraint === 'usertable_pkey') {
+                    res.status(403).send("Username already exists");
+                } else {
+                    res.sendStatus(500);
+                }
+            }
+        })
     } catch (err) {
-        if (err.constraint === 'usertable_pkey') {
-            res.status(403).send("Username already exists");
-        } else {
-            res.sendStatus(500);
-        }
+        res.sendStatus(500);
     }
 });
 
@@ -186,18 +194,20 @@ router.post('/users', rateLimit, async (req, res) => {
  */
 router.post('/login', rateLimit, async (req, res) => {
     try {
-        const user = req.body;
-        const checkForUser = await client.query("SELECT * FROM USERTABLE WHERE username = $1 AND password = $2",
-            [user.username, user.password]);
-        if (checkForUser.rows.length === 0) {
-            res.status(404).send("Invalid User and/or Password combination");
-        } else {
-            res.sendStatus(200);
-        }
+        const {username, password} = req.body;
+        await checkCredentials(username, password, (err, valid) => {
+            if (err) throw err;
+            if (valid) {
+                res.sendStatus(200)
+            } else {
+                res.status(404).send("Invalid User and/or Password combination");
+            }
+        })
     } catch (err) {
         res.sendStatus(500);
     }
-});
+})
+;
 
 
 /**
@@ -232,13 +242,18 @@ router.put('/users/:username', rateLimit, async (req, res) => {
     try {
         const {username} = req.params;
         const {newPassword, oldPassword} = req.body;
-        const updatedUser = await client.query("UPDATE USERTABLE SET password = $1 where username = $2 AND password = $3 RETURNING *",
-            [newPassword, username, oldPassword]);
-        if (updatedUser.rows.length === 0) {
-            res.sendStatus(404);
-        } else {
-            res.status(200).json(updatedUser.rows[0]);
-        }
+        await checkCredentials(username, oldPassword, async (err, valid) => {
+            if (err) throw err;
+            if (valid) {
+                cryptPassword(newPassword, async (cryptErr, hash) => {
+                    if (cryptErr) throw cryptErr;
+                    await client.query("UPDATE USERTABLE SET password = $1 where username = $2", [hash, username]);
+                    res.sendStatus(200);
+                })
+            } else {
+                res.sendStatus(404);
+            }
+        })
     } catch (err) {
         res.sendStatus(500);
     }
@@ -264,19 +279,36 @@ router.put('/users/:username', rateLimit, async (req, res) => {
  */
 router.delete('/users', rateLimit, async (req, res) => {
     try {
-        const user = req.body;
-        const deletedUser = await client.query("DELETE FROM USERTABLE WHERE username=$1 AND password=$2 RETURNING *",
-            [user.username, user.password]);
-        if (deletedUser.rows.length === 0) {
-            res.sendStatus(404);
-        } else {
-            res.status(200).send("Successfully deleted the User");
-        }
+        const {username, password} = req.body;
+        await checkCredentials(username, password, async (err, valid) => {
+            if (err) throw err;
+            if (valid) {
+                await client.query("DELETE FROM USERTABLE WHERE username=$1", [username]);
+                res.status(200).send("Successfully deleted the User");
+            } else {
+                res.status(404).send("User not found");
+            }
+        })
     } catch (err) {
         res.sendStatus(500);
     }
 });
 
+const checkCredentials = async (username, password, callback) => {
+    const foundUser = await client.query("SELECT * FROM USERTABLE WHERE username = $1",
+        [username]);
 
+    if (foundUser.rows.length === 1) {
+        comparePassword(password, foundUser.rows[0].password, (err, valid) => {
+            if (!err) {
+                callback(null, valid)
+            } else {
+                callback(err)
+            }
+        })
+    } else {
+        callback(new Error("username not found"))
+    }
+}
 
 module.exports = router;
