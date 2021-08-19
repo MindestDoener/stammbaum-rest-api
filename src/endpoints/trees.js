@@ -250,11 +250,16 @@ router.delete('/trees/:id', rateLimit, async (req, res) => {
 
 /**
  * @swagger
- * /trees/{id}:
+ * /trees/user/{username}/{id}:
  *  get:
- *      summary: gets specific Tree by id (needs admin key)
+ *      summary: gets specific Tree by user and id
  *      tags: [Trees]
  *      parameters:
+ *          - in: path
+ *            name: username
+ *            type: string
+ *            required: true
+ *            description: username of the tree owner.
  *          - in: path
  *            name: id
  *            type: integer
@@ -270,10 +275,10 @@ router.delete('/trees/:id', rateLimit, async (req, res) => {
  *          404:
  *              description: Tree not found
  */
-router.get('/trees/:id', rateLimit, auth('admin'), async (req, res) => {
+router.get('/trees/user/:username/:id', rateLimit, async (req, res) => {
     try {
-        const {id} = req.params;
-        const getTreedata = await client.query("SELECT * FROM trees WHERE id = $1", [id]);
+        const {username, id} = req.params;
+        const getTreedata = await client.query("SELECT * FROM trees WHERE id = $1 AND username = $2", [id, username]);
         if (getTreedata.rows.length === 0) {
             res.sendStatus(404);
         } else {
